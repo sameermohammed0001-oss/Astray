@@ -1,0 +1,21 @@
+.DS_Store
+# Build artifacts
+astray
+build/
+bin/
+obj/
+*.o
+*.out
+*.exe
+*.obj
+*.dSYM/
+
+# Backup and editor files
+*~
+*.swp
+.vscode/
+.idea/
+__pycache__/
+
+# Logs
+.log
