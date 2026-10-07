@@ -30,11 +30,19 @@ static int match(TokenType type)
 
 static void error(const char *message)
 {
-    printf("Parser error at line %d: %s\n", current.line, message);
+    printf(
+        "Parser error at line %d: %s\n",
+        current.line,
+        message
+    );
+
     exit(1);
 }
 
-static void consume(TokenType type, const char *message)
+static void consume(
+    TokenType type,
+    const char *message
+)
 {
     if (!check(type))
         error(message);
@@ -63,14 +71,16 @@ static ASTNode *primary(void)
 {
     if (match(TOKEN_NUMBER))
     {
-        int value = atoi(previous.lexeme);
-
-        return ast_number(value);
+        return ast_number(
+            atoi(previous.lexeme)
+        );
     }
 
     if (match(TOKEN_IDENTIFIER))
     {
-        return ast_identifier(previous.lexeme);
+        return ast_identifier(
+            previous.lexeme
+        );
     }
 
     if (match(TOKEN_LEFT_PAREN))
@@ -106,9 +116,11 @@ static ASTNode *factor(void)
 {
     ASTNode *node = unary();
 
-    while (check(TOKEN_STAR) ||
-           check(TOKEN_SLASH) ||
-           check(TOKEN_PERCENT))
+    while (
+        check(TOKEN_STAR) ||
+        check(TOKEN_SLASH) ||
+        check(TOKEN_PERCENT)
+    )
     {
         TokenType operator = current.type;
 
@@ -125,7 +137,11 @@ static ASTNode *factor(void)
         else
             operator_text = "%";
 
-        node = ast_binary(node, operator_text, right);
+        node = ast_binary(
+            node,
+            operator_text,
+            right
+        );
     }
 
     return node;
@@ -135,8 +151,10 @@ static ASTNode *term(void)
 {
     ASTNode *node = factor();
 
-    while (check(TOKEN_PLUS) ||
-           check(TOKEN_MINUS))
+    while (
+        check(TOKEN_PLUS) ||
+        check(TOKEN_MINUS)
+    )
     {
         TokenType operator = current.type;
 
@@ -151,7 +169,11 @@ static ASTNode *term(void)
         else
             operator_text = "-";
 
-        node = ast_binary(node, operator_text, right);
+        node = ast_binary(
+            node,
+            operator_text,
+            right
+        );
     }
 
     return node;
@@ -161,10 +183,12 @@ static ASTNode *comparison(void)
 {
     ASTNode *node = term();
 
-    while (check(TOKEN_LESS) ||
-           check(TOKEN_GREATER) ||
-           check(TOKEN_LESS_EQUAL) ||
-           check(TOKEN_GREATER_EQUAL))
+    while (
+        check(TOKEN_LESS) ||
+        check(TOKEN_GREATER) ||
+        check(TOKEN_LESS_EQUAL) ||
+        check(TOKEN_GREATER_EQUAL)
+    )
     {
         TokenType operator = current.type;
 
@@ -183,7 +207,11 @@ static ASTNode *comparison(void)
         else
             operator_text = ">=";
 
-        node = ast_binary(node, operator_text, right);
+        node = ast_binary(
+            node,
+            operator_text,
+            right
+        );
     }
 
     return node;
@@ -193,8 +221,10 @@ static ASTNode *equality(void)
 {
     ASTNode *node = comparison();
 
-    while (check(TOKEN_EQUAL) ||
-           check(TOKEN_NOT_EQUAL))
+    while (
+        check(TOKEN_EQUAL) ||
+        check(TOKEN_NOT_EQUAL)
+    )
     {
         TokenType operator = current.type;
 
@@ -209,7 +239,11 @@ static ASTNode *equality(void)
         else
             operator_text = "!=";
 
-        node = ast_binary(node, operator_text, right);
+        node = ast_binary(
+            node,
+            operator_text,
+            right
+        );
     }
 
     return node;
@@ -220,6 +254,129 @@ static ASTNode *expression(void)
     return equality();
 }
 
+static ASTNode *block(void)
+{
+    ASTNode *program = ast_program();
+
+    consume(
+        TOKEN_LEFT_BRACE,
+        "Expected '{'"
+    );
+
+    while (
+        !check(TOKEN_RIGHT_BRACE) &&
+        !check(TOKEN_EOF)
+    )
+    {
+        ASTNode *node;
+
+        if (match(TOKEN_LET))
+        {
+            consume(
+                TOKEN_IDENTIFIER,
+                "Expected variable name"
+            );
+
+            char *name = malloc(
+                strlen(previous.lexeme) + 1
+            );
+
+            strcpy(name, previous.lexeme);
+
+            consume(
+                TOKEN_ASSIGN,
+                "Expected '=' after variable name"
+            );
+
+            ASTNode *value = expression();
+
+            consume(
+                TOKEN_SEMICOLON,
+                "Expected ';'"
+            );
+
+            node = ast_var_decl(
+                name,
+                value
+            );
+
+            free(name);
+        }
+        else if (match(TOKEN_SHOW))
+        {
+            consume(
+                TOKEN_LEFT_PAREN,
+                "Expected '(' after 'show'"
+            );
+
+            ASTNode *value = expression();
+
+            consume(
+                TOKEN_RIGHT_PAREN,
+                "Expected ')'"
+            );
+
+            consume(
+                TOKEN_SEMICOLON,
+                "Expected ';'"
+            );
+
+            node = ast_show(value);
+        }
+        else
+        {
+            node = expression();
+
+            if (node->type == AST_IDENTIFIER &&
+                check(TOKEN_ASSIGN))
+            {
+                char *name = malloc(
+                    strlen(node->identifier) + 1
+                );
+
+                strcpy(
+                    name,
+                    node->identifier
+                );
+
+                ast_free(node);
+
+                advance_token();
+
+                ASTNode *value = expression();
+
+                consume(
+                    TOKEN_SEMICOLON,
+                    "Expected ';'"
+                );
+
+                node = ast_assign(
+                    name,
+                    value
+                );
+
+                free(name);
+            }
+            else
+            {
+                consume(
+                    TOKEN_SEMICOLON,
+                    "Expected ';'"
+                );
+            }
+        }
+
+        ast_program_add(program, node);
+    }
+
+    consume(
+        TOKEN_RIGHT_BRACE,
+        "Expected '}'"
+    );
+
+    return program;
+}
+
 static ASTNode *variable_declaration(void)
 {
     consume(
@@ -227,10 +384,9 @@ static ASTNode *variable_declaration(void)
         "Expected variable name"
     );
 
-    char *name = malloc(strlen(previous.lexeme) + 1);
-
-    if (name == NULL)
-        exit(1);
+    char *name = malloc(
+        strlen(previous.lexeme) + 1
+    );
 
     strcpy(name, previous.lexeme);
 
@@ -246,7 +402,10 @@ static ASTNode *variable_declaration(void)
         "Expected ';' after variable declaration"
     );
 
-    ASTNode *node = ast_var_decl(name, value);
+    ASTNode *node = ast_var_decl(
+        name,
+        value
+    );
 
     free(name);
 
@@ -260,19 +419,84 @@ static ASTNode *show_statement(void)
         "Expected '(' after 'show'"
     );
 
-    ASTNode *expression_node = expression();
+    ASTNode *value = expression();
 
     consume(
         TOKEN_RIGHT_PAREN,
-        "Expected ')' after expression"
+        "Expected ')'"
     );
 
     consume(
         TOKEN_SEMICOLON,
-        "Expected ';' after show statement"
+        "Expected ';'"
     );
 
-    return ast_show(expression_node);
+    return ast_show(value);
+}
+
+static ASTNode *assignment_statement(void)
+{
+    consume(
+        TOKEN_IDENTIFIER,
+        "Expected variable name"
+    );
+
+    char *name = malloc(
+        strlen(previous.lexeme) + 1
+    );
+
+    strcpy(name, previous.lexeme);
+
+    consume(
+        TOKEN_ASSIGN,
+        "Expected '='"
+    );
+
+    ASTNode *value = expression();
+
+    consume(
+        TOKEN_SEMICOLON,
+        "Expected ';'"
+    );
+
+    ASTNode *node = ast_assign(
+        name,
+        value
+    );
+
+    free(name);
+
+    return node;
+}
+
+static ASTNode *if_statement(void)
+{
+    ASTNode *condition = expression();
+
+    ASTNode *then_branch = block();
+
+    ASTNode *else_branch = NULL;
+
+    if (match(TOKEN_ELSE))
+        else_branch = block();
+
+    return ast_if(
+        condition,
+        then_branch,
+        else_branch
+    );
+}
+
+static ASTNode *while_statement(void)
+{
+    ASTNode *condition = expression();
+
+    ASTNode *body = block();
+
+    return ast_while(
+        condition,
+        body
+    );
 }
 
 static ASTNode *statement(void)
@@ -282,6 +506,19 @@ static ASTNode *statement(void)
 
     if (match(TOKEN_SHOW))
         return show_statement();
+
+    if (match(TOKEN_IF))
+        return if_statement();
+
+    if (match(TOKEN_WHILE))
+        return while_statement();
+
+    if (
+        check(TOKEN_IDENTIFIER)
+    )
+    {
+        return assignment_statement();
+    }
 
     error("Expected statement");
 
@@ -296,7 +533,10 @@ ASTNode *parse_program(void)
     {
         ASTNode *node = statement();
 
-        ast_program_add(program, node);
+        ast_program_add(
+            program,
+            node
+        );
     }
 
     return program;

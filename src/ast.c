@@ -130,6 +130,34 @@ ASTNode *ast_show(ASTNode *expression)
     return node;
 }
 
+ASTNode *ast_if(
+    ASTNode *condition,
+    ASTNode *then_branch,
+    ASTNode *else_branch
+)
+{
+    ASTNode *node = create_node(AST_IF);
+
+    node->if_statement.condition = condition;
+    node->if_statement.then_branch = then_branch;
+    node->if_statement.else_branch = else_branch;
+
+    return node;
+}
+
+ASTNode *ast_while(
+    ASTNode *condition,
+    ASTNode *body
+)
+{
+    ASTNode *node = create_node(AST_WHILE);
+
+    node->while_statement.condition = condition;
+    node->while_statement.body = body;
+
+    return node;
+}
+
 static void print_indent(int depth)
 {
     for (int i = 0; i < depth; i++)
@@ -145,6 +173,7 @@ void ast_print(ASTNode *node, int depth)
 
     switch (node->type)
     {
+
         case AST_PROGRAM:
             printf("PROGRAM\n");
 
@@ -186,6 +215,61 @@ void ast_print(ASTNode *node, int depth)
             printf("SHOW\n");
             ast_print(node->show, depth + 1);
             break;
+        
+        case AST_IF:
+
+    printf("IF\n");
+
+    print_indent(depth + 1);
+    printf("CONDITION\n");
+
+    ast_print(
+        node->if_statement.condition,
+        depth + 2
+    );
+
+    print_indent(depth + 1);
+    printf("THEN\n");
+
+    ast_print(
+        node->if_statement.then_branch,
+        depth + 2
+    );
+
+    if (node->if_statement.else_branch != NULL)
+    {
+        print_indent(depth + 1);
+        printf("ELSE\n");
+
+        ast_print(
+            node->if_statement.else_branch,
+            depth + 2
+        );
+    }
+
+    break;
+
+case AST_WHILE:
+
+    printf("WHILE\n");
+
+    print_indent(depth + 1);
+    printf("CONDITION\n");
+
+    ast_print(
+        node->while_statement.condition,
+        depth + 2
+    );
+
+    print_indent(depth + 1);
+    printf("BODY\n");
+
+    ast_print(
+        node->while_statement.body,
+        depth + 2
+    );
+
+    break;
     }
 }
 
@@ -234,6 +318,21 @@ void ast_free(ASTNode *node)
 
         case AST_NUMBER:
             break;
+        
+            case AST_IF:
+
+    ast_free(node->if_statement.condition);
+    ast_free(node->if_statement.then_branch);
+    ast_free(node->if_statement.else_branch);
+
+    break;
+
+case AST_WHILE:
+
+    ast_free(node->while_statement.condition);
+    ast_free(node->while_statement.body);
+
+    break;
     }
 
     free(node);

@@ -1,12 +1,28 @@
-#ifndef SYMBOL_TABLE_H
-#define SYMBOL_TABLE_H
+#ifndef ASTRAY_SYMBOL_TABLE_H
+#define ASTRAY_SYMBOL_TABLE_H
 
-typedef struct {
-    int dummy;
+#define MAX_SYMBOLS 256
+
+typedef struct
+{
+    char *name;
+} Symbol;
+
+typedef struct
+{
+    Symbol symbols[MAX_SYMBOLS];
+    int count;
 } SymbolTable;
 
-SymbolTable *symbol_table_create(void);
+void symbol_table_init(SymbolTable *table);
+
+int symbol_table_add(SymbolTable *table, const char *name);
+
+int symbol_table_exists(
+    SymbolTable *table,
+    const char *name
+);
+
 void symbol_table_free(SymbolTable *table);
-int symbol_table_insert(SymbolTable *table, const char *name, int value);
 
 #endif

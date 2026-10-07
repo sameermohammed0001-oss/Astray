@@ -10,7 +10,9 @@ typedef enum
     AST_UNARY,
     AST_ASSIGN,
     AST_VAR_DECL,
-    AST_SHOW
+    AST_SHOW,
+    AST_IF,
+    AST_WHILE
 } ASTNodeType;
 
 typedef struct ASTNode ASTNode;
@@ -21,6 +23,19 @@ struct ASTNode
 
     union
     {
+        struct
+        {
+            ASTNode *condition;
+            ASTNode *then_branch;
+            ASTNode *else_branch;
+        } if_statement;
+
+        struct
+        {
+            ASTNode *condition;
+            ASTNode *body;
+        } while_statement;
+
         struct
         {
             ASTNode **statements;
@@ -71,6 +86,16 @@ ASTNode *ast_unary(const char *operator, ASTNode *operand);
 ASTNode *ast_assign(const char *name, ASTNode *value);
 ASTNode *ast_var_decl(const char *name, ASTNode *value);
 ASTNode *ast_show(ASTNode *expression);
+ASTNode *ast_if(
+    ASTNode *condition,
+    ASTNode *then_branch,
+    ASTNode *else_branch
+);
+
+ASTNode *ast_while(
+    ASTNode *condition,
+    ASTNode *body
+);
 
 void ast_print(ASTNode *node, int depth);
 void ast_free(ASTNode *node);

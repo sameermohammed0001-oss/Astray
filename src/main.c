@@ -3,6 +3,7 @@
 #include "lexer.h"
 #include "parser.h"
 #include "ast.h"
+#include "semantic.h"
 
 char *read_file(const char *filename)
 {
@@ -54,6 +55,12 @@ int main(int argc, char *argv[])
     printf("\n===== ASTRAY AST =====\n\n");
 
     ast_print(program, 0);
+
+    printf("\n===== SEMANTIC ANALYSIS =====\n\n");
+
+    semantic_analyze(program);
+
+    printf("Semantic analysis successful.\n");
 
     ast_free(program);
 
