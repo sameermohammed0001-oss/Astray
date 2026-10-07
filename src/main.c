@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "lexer.h"
+#include "parser.h"
+#include "ast.h"
 
 char *read_file(const char *filename)
 {
@@ -45,23 +47,15 @@ int main(int argc, char *argv[])
 
     lexer_init(source);
 
-    while (1)
-    {
-        Token token = lexer_next();
+    parser_init();
 
-        printf("%-15s %-10s line=%d\n",
-               token_type_name(token.type),
-               token.lexeme,
-               token.line);
+    ASTNode *program = parse_program();
 
-        if (token.type == TOKEN_EOF)
-        {
-            token_free(token);
-            break;
-        }
+    printf("\n===== ASTRAY AST =====\n\n");
 
-        token_free(token);
-    }
+    ast_print(program, 0);
+
+    ast_free(program);
 
     free(source);
 

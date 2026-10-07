@@ -1,18 +1,10 @@
-#ifndef PARSER_H
-#define PARSER_H
+#ifndef ASTRAY_PARSER_H
+#define ASTRAY_PARSER_H
 
+#include "ast.h"
 #include "lexer.h"
 
-typedef struct {
-    Lexer *lexer;
-    Token current;
-    Token previous;
-} Parser;
-
-int parser_init(Parser *parser, Lexer *lexer);
-Token parser_peek(Parser *parser);
-Token parser_next(Parser *parser);
-int parser_match(Parser *parser, TokenType type);
-int parser_expect(Parser *parser, TokenType type);
+void parser_init(void);
+ASTNode *parse_program(void);
 
 #endif
